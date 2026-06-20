@@ -4,7 +4,6 @@ function M.apply_to_config(config)
 	-- Set Default Program and Domain
 	config.default_prog = { "wsl.exe", "-d", "Ubuntu-24.04", "--cd", "~", "bash", "-l" }
 	config.default_domain = "WSL:Ubuntu-24.04"
-
 	-- Custom Launcher Menu
 	config.launch_menu = {
 		{

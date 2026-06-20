@@ -115,7 +115,7 @@ config.wsl_domains = {
 		name = "WSL:Ubuntu-24.04",
 		distribution = "Ubuntu-24.04",
 		default_cwd = "~",
-		default_prog = { "bash" },
+		default_prog = { "bash", "-l" },
 	},
 }
 -- set unix_domains
@@ -244,8 +244,58 @@ config.leader = { key = "a", mods = "CTRL", timeout_milliseconds = 3000 }
 
 config.keys = {
 	-- Pane Management
-	{ key = "/", mods = "CTRL|ALT", action = act.SplitHorizontal({ domain = "CurrentPaneDomain" }) },
-	{ key = ".", mods = "CTRL|ALT", action = act.SplitVertical({ domain = "CurrentPaneDomain" }) },
+	{
+		key = "/",
+		mods = "CTRL|ALT",
+		action = wezterm.action_callback(function(window, pane)
+			local cwd_url = pane:get_current_working_dir()
+			local domain = pane:get_domain_name()
+			local args = nil
+
+			if cwd_url and (domain == "local" or domain == "unix") then
+				local path = cwd_url.file_path
+				if not path:match("^%a:") then
+					local unix_path = path:gsub("^/[wW][sS][lL]%.[lL][oO][cC][aA][lL][hH][oO][sS][tT]/[^/]+", "")
+					unix_path = unix_path:gsub("^/[wW][sS][lL]%$/[^/]+", "")
+					args = { "wsl.exe", "-d", "Ubuntu-24.04", "--cd", unix_path, "bash", "-l" }
+				end
+			end
+
+			window:perform_action(
+				act.SplitHorizontal({
+					domain = "CurrentPaneDomain",
+					args = args,
+				}),
+				pane
+			)
+		end),
+	},
+	{
+		key = ".",
+		mods = "CTRL|ALT",
+		action = wezterm.action_callback(function(window, pane)
+			local cwd_url = pane:get_current_working_dir()
+			local domain = pane:get_domain_name()
+			local args = nil
+
+			if cwd_url and (domain == "local" or domain == "unix") then
+				local path = cwd_url.file_path
+				if not path:match("^%a:") then
+					local unix_path = path:gsub("^/[wW][sS][lL]%.[lL][oO][cC][aA][lL][hH][oO][sS][tT]/[^/]+", "")
+					unix_path = unix_path:gsub("^/[wW][sS][lL]%$/[^/]+", "")
+					args = { "wsl.exe", "-d", "Ubuntu-24.04", "--cd", unix_path, "bash", "-l" }
+				end
+			end
+
+			window:perform_action(
+				act.SplitVertical({
+					domain = "CurrentPaneDomain",
+					args = args,
+				}),
+				pane
+			)
+		end),
+	},
 
 	{ key = "LeftArrow", mods = "CTRL|ALT", action = act.ActivatePaneDirection("Left") },
 	{ key = "RightArrow", mods = "CTRL|ALT", action = act.ActivatePaneDirection("Right") },

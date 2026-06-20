@@ -1,5 +1,9 @@
 local wezterm = require("wezterm")
 
+-- Ensure the config directory is in the package path for resolving modules in the config folder
+package.path = package.path .. ";" .. wezterm.config_dir .. "/?.lua"
+package.path = package.path .. ";" .. wezterm.config_dir .. "/?/init.lua"
+
 local plugin_root = wezterm.home_dir .. "/.config/wezterm/plugin"
 
 local function load_local_plugin(name)

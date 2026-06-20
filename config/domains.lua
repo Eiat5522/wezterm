@@ -8,7 +8,7 @@ function M.apply_to_config(config)
 			name = "WSL:Ubuntu-24.04",
 			distribution = "Ubuntu-24.04",
 			default_cwd = "~",
-			default_prog = { "bash" },
+			default_prog = { "bash", "-l" },
 		},
 	}
 
