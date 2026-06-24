@@ -5,6 +5,7 @@ function M.apply_to_config(config, plugins)
 	-- Terminal appearance
 	config.color_scheme = "tokyonight"
 	config.window_background_opacity = 0.98
+	config.adjust_window_size_when_changing_font_size = true
 	config.window_padding = { left = 0, right = 0, top = 0, bottom = 0 }
 
 	-- Tab bar display settings
@@ -31,6 +32,7 @@ function M.apply_to_config(config, plugins)
 	config.audible_bell = "SystemBeep"
 	config.warn_about_missing_glyphs = true
 	config.mouse_wheel_scrolls_tabs = false
+	config.detect_password_input = true
 
 	-- Tabline setup
 	if plugins.tabline then

@@ -1,4 +1,5 @@
 local wezterm = require("wezterm")
+local mux = wezterm.mux
 local act = wezterm.action
 local M = {}
 
@@ -9,6 +10,8 @@ local function open_cht_sh(window, pane, line)
 
 	local query = line:match("^%s*(.-)%s*$")
 	local command = "cht.sh --shell=bash --mode=auto"
+	local cwd_url = pane:get_current_working_dir()
+	local cwd = cwd_url and cwd_url.file_path or nil
 	if query ~= "" then
 		command = command .. " " .. string.format("%q", query)
 	end
@@ -16,8 +19,9 @@ local function open_cht_sh(window, pane, line)
 	window:perform_action(
 		act.SpawnCommandInNewWindow({
 			label = query ~= "" and ("cht.sh: " .. query) or "cht.sh",
-			args = { "bash", "-l", "-c", command },
-			domain = "local",
+			args = { "bash", "-lc", command .. "; exec bash -li" },
+			cwd = cwd,
+			domain = "CurrentPaneDomain",
 			position = { x = 100, y = 50 },
 		}),
 		pane
@@ -94,7 +98,7 @@ function M.apply_to_config(config, plugins)
 				)
 			end),
 		},
-
+		-- Pane Navigation and Resizing
 		{ key = "LeftArrow", mods = "CTRL|ALT", action = act.ActivatePaneDirection("Left") },
 		{ key = "RightArrow", mods = "CTRL|ALT", action = act.ActivatePaneDirection("Right") },
 		{ key = "UpArrow", mods = "CTRL|ALT", action = act.ActivatePaneDirection("Up") },
@@ -108,11 +112,11 @@ function M.apply_to_config(config, plugins)
 		{ key = "w", mods = "CTRL|ALT", action = act.CloseCurrentPane({ confirm = false }) },
 		{ key = "x", mods = "CTRL|ALT", action = act.CloseCurrentPane({ confirm = false }) },
 		{ key = "x", mods = "LEADER", action = act.CloseCurrentTab({ confirm = true }) },
-
+		-- Tab Management
 		{ key = "t", mods = "LEADER", action = act.SpawnTab("CurrentPaneDomain") },
 		{ key = "Tab", mods = "CTRL", action = act.ActivateTabRelative(1) },
 		{ key = "Tab", mods = "CTRL|SHIFT", action = act.ActivateTabRelative(-1) },
-
+		-- Command Palette and Launcher
 		{ key = "p", mods = "CTRL|SHIFT", action = act.ActivateCommandPalette },
 		{
 			key = "l",
@@ -140,20 +144,41 @@ function M.apply_to_config(config, plugins)
 			mods = "LEADER|SHIFT",
 			action = act.SpawnCommandInNewWindow({
 				label = "Open Wezterm Config",
-				args = { "bash", "-c", '$EDITOR "/mnt/c/Users/Dev/.wezterm.lua"' },
+				args = { "bash", "-li", '$EDITOR "/mnt/c/Users/Dev/.wezterm.lua"' },
 				domain = "CurrentPaneDomain",
-				position = { x = 300, y = 500 },
+				position = { x = 0, y = 0 },
 			}),
 		},
 		{
 			key = "B",
 			mods = "CTRL|SHIFT",
-			action = act.SpawnCommandInNewWindow({
-				label = "Open btop",
-				args = { "bash", "-c", "$EDITOR '/mnt/c/Users/Dev/.wezterm.lua'" },
-				domain = "CurrentPaneDomain",
-				position = { x = 300, y = 500 },
-			}),
+			action = wezterm.action_callback(function(_, pane)
+				local cwd_url = pane:get_current_working_dir()
+				local cwd = cwd_url and cwd_url.file_path or nil
+				local domain = pane:get_domain_name()
+
+				local _, _, btop_window = mux.spawn_window({
+					args = { "bash", "-lc", "btop" },
+					cwd = cwd,
+					domain = domain and { DomainName = domain } or nil,
+					width = 80,
+					height = 25,
+					position = {
+						x = 80,
+						y = 40,
+						origin = "ActiveScreen",
+					},
+				})
+
+				wezterm.sleep_ms(50)
+
+				local gui_window = btop_window and btop_window:gui_window()
+				if gui_window then
+					local overrides = gui_window:get_config_overrides() or {}
+					overrides.enable_tab_bar = false
+					gui_window:set_config_overrides(overrides)
+				end
+			end),
 		},
 		{
 			key = "E",
@@ -174,7 +199,9 @@ function M.apply_to_config(config, plugins)
 			action = act.PromptInputLine({
 				description = "Enter package or library for cht.sh",
 				action = wezterm.action_callback(function(window, pane, line)
-					open_cht_sh(window, pane, line)
+					if line then
+						open_cht_sh(window, pane, line)
+					end
 				end),
 			}),
 		},

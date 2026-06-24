@@ -33,14 +33,22 @@ function M.apply_to_config(config)
 			remote_wezterm_path = "/home/eiat/.local/opt/wezterm-20260610-150805-891bed31/usr/bin/wezterm",
 		})
 	end
-	config.ssh_domains = ssh_domains
+	--config.ssh_domains = ssh_domains
+
+	-- TLS server for SSH-bootstrapped TLS mux connections
+	config.tls_servers = {
+		{
+			bind_address = "127.0.0.1:8083",
+		},
+	}
 
 	-- TLS clients
 	config.tls_clients = {
 		{
 			name = "tls.server",
-			bootstrap_via_ssh = "eiat@127.0.0.1:2222",
+			bootstrap_via_ssh = "wsl-ubuntu",
 			remote_address = "127.0.0.1:8083",
+			expected_cn = "wsl-ubuntu",
 			accept_invalid_hostnames = false,
 			connect_automatically = false,
 			read_timeout = 60,

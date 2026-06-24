@@ -32,6 +32,7 @@ wezterm.on("gui-attached", function(domain)
 		end
 	end
 end)
+
 -- Allow working with both the current release and the nightly
 local config = {}
 if wezterm.config_builder then
@@ -59,7 +60,7 @@ local function open_cht_sh(window, pane, line)
 	window:perform_action(
 		act.SpawnCommandInNewWindow({
 			label = query ~= "" and ("cht.sh: " .. query) or "cht.sh",
-			args = { "bash", "-l", "-c", command },
+			args = { "bash", "-l", "-lc", command },
 			domain = "local",
 			position = { x = 100, y = 50 },
 		}),
@@ -153,6 +154,12 @@ for host in pairs(wezterm.enumerate_ssh_hosts()) do
 	})
 end
 
+config.tls_servers = {
+	{
+		bind_address = "127.0.0.1:8083",
+	},
+}
+
 config.tls_clients = {
 	{
 		-- The name of this specific domain.  Must be unique amongst
@@ -161,9 +168,10 @@ config.tls_clients = {
 		-- If set, use ssh to connect, start the server, and obtain
 		-- a certificate.
 		-- The value is "user@host:port", just like "wezterm ssh" accepts.
-		bootstrap_via_ssh = "eiat@127.0.0.1:2222",
+		bootstrap_via_ssh = "wsl-ubuntu",
 		-- identifies the host:port pair of the remote server.
 		remote_address = "127.0.0.1:8083",
+		expected_cn = "wsl-ubuntu",
 		accept_invalid_hostnames = false,
 		-- Specify an alternate read timeout
 		-- If true, connect to this domain automatically at startup
@@ -342,9 +350,9 @@ config.keys = {
 		mods = "LEADER|SHIFT",
 		action = act.SpawnCommandInNewWindow({
 			label = "Open Wezterm Config",
-			args = { "bash", "-c", '$EDITOR "/mnt/c/Users/Dev/.wezterm.lua"' },
+			args = { "bash", "-lc", '$EDITOR "/mnt/c/Users/Dev/.wezterm.lua"' },
 			domain = "CurrentPaneDomain",
-			position = { x = 300, y = 500 },
+			position = { x = 0, y = 0 },
 		}),
 	},
 	{
@@ -352,9 +360,9 @@ config.keys = {
 		mods = "CTRL|SHIFT",
 		action = act.SpawnCommandInNewWindow({
 			label = "Open btop",
-			args = { "bash", "-c", "$EDITOR '/mnt/c/Users/Dev/.wezterm.lua'" },
+			args = { "bash", "-lc", "btop" },
 			domain = "CurrentPaneDomain",
-			position = { x = 300, y = 500 },
+			position = { x = 0, y = 0 },
 		}),
 	},
 	{
@@ -377,6 +385,9 @@ config.keys = {
 			description = "Enter package or library for cht.sh",
 			action = wezterm.action_callback(function(window, pane, line)
 				open_cht_sh(window, pane, line)
+				if line then
+					window:active_tab():set_title(line)
+				end
 			end),
 		}),
 	},
@@ -527,7 +538,5 @@ wezterm.on("update-status", function(window, pane)
 		window:set_config_overrides(overrides)
 	end
 end)
-
---config.wsl_domains = wsl_domains
 
 return config
