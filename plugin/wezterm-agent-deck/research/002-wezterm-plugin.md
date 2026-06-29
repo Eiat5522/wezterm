@@ -22,7 +22,7 @@ WezTerm is a powerful cross-platform terminal emulator written in Rust by [@wez]
 
 **Use cases for plugins:**
 - Custom tab bar styling (tabline.wez, bar.wezterm)
-- Session/workspace management (resurrect.wezterm, smart_workspace_switcher)
+- Session/workspace management (resurrect.wezterm)
 - Keybinding enhancement (modal.wezterm, wez-tmux)
 - UI customization (presentation.wez, themes)
 - Integration with external tools (AI helpers, Neovim)
@@ -263,7 +263,6 @@ end)
 
 Examples from popular plugins:
 - `resurrect.state_manager.save_state.finished`
-- `smart_workspace_switcher.workspace_switcher.created`
 - `modal.enter` / `modal.exit`
 
 ---
@@ -545,40 +544,6 @@ function M.set_right_status(window, mode_name)
 end
 ```
 
-### 7.4 Workspace Switching (smart_workspace_switcher)
-
-**Pattern:** Fuzzy finder integration with custom actions
-
-```lua
-function M.switch_workspace(opts)
-    opts = opts or {}
-    return wezterm.action_callback(function(window, pane)
-        wezterm.emit('smart_workspace_switcher.workspace_switcher.start', window, pane)
-        
-        local choices = M.get_choices(opts)
-        
-        window:perform_action(
-            wezterm.action.InputSelector({
-                title = 'Switch Workspace',
-                choices = choices,
-                fuzzy = true,
-                action = wezterm.action_callback(function(inner_window, inner_pane, id, label)
-                    if not id then
-                        wezterm.emit('smart_workspace_switcher.workspace_switcher.canceled', window, pane)
-                        return
-                    end
-                    -- Switch workspace logic...
-                    wezterm.emit('smart_workspace_switcher.workspace_switcher.chosen', window, label)
-                end),
-            }),
-            pane
-        )
-    end)
-end
-```
-
----
-
 ## 8. Type Safety & Developer Experience
 
 ### 8.1 wezterm-types
@@ -788,7 +753,7 @@ wezterm.emit('my_plugin.operation.failed', error_details)
 | Category | Examples | Stars |
 |----------|----------|-------|
 | Tab Bar | tabline.wez, bar.wezterm | 250+, 195+ |
-| Session | resurrect.wezterm, smart_workspace_switcher | 258+, 173+ |
+| Session | resurrect.wezterm | 258+ |
 | Keybinding | modal.wezterm, wez-tmux | 104+ |
 | Themes | neapsix/wezterm, theme-rotator | Various |
 | Utility | lib.wezterm, dev.wezterm | 5+ |
@@ -898,4 +863,3 @@ tab:panes_with_info()
 - [bar.wezterm](https://github.com/adriankarlen/bar.wezterm)
 - [resurrect.wezterm](https://github.com/MLFlexer/resurrect.wezterm)
 - [modal.wezterm](https://github.com/MLFlexer/modal.wezterm)
-- [smart_workspace_switcher.wezterm](https://github.com/MLFlexer/smart_workspace_switcher.wezterm)

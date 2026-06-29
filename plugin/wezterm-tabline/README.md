@@ -650,7 +650,6 @@ extensions = { 'resurrect' }
 #### Available extensions
 
 - resurrect
-- smart_workspace_switcher
 - quick_domains
 - presentation
 

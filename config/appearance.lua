@@ -5,7 +5,7 @@ function M.apply_to_config(config, plugins)
 	-- Terminal appearance
 	config.color_scheme = "tokyonight"
 	config.window_background_opacity = 0.98
-	config.adjust_window_size_when_changing_font_size = true
+	config.adjust_window_size_when_changing_font_size = false
 	config.window_padding = { left = 0, right = 0, top = 0, bottom = 0 }
 
 	-- Tab bar display settings
@@ -65,11 +65,11 @@ function M.apply_to_config(config, plugins)
 					{ "zoomed", padding = 0 },
 				},
 				tab_inactive = { "index", { "process", padding = { left = 0, right = 1 } } },
-				tabline_x = { "ram" },
+				tabline_x = { "tardy", { "agent_deck", agent_deck = plugins.agent_deck }, "ram" },
 				tabline_y = { "" },
 				tabline_z = { "domain" },
 			},
-			extensions = { "resurrect", "smart_workspace_switcher" },
+			extensions = { "resurrect" },
 		})
 		if not ok then
 			wezterm.log_warn("Failed to initialize tabline.wez: " .. tostring(err))

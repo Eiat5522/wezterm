@@ -9,7 +9,6 @@ return {
         'quick_domain.fuzzy_selector.canceled',
         'quick_domain.fuzzy_selector.selected',
         'resurrect.fuzzy_load.start',
-        'smart_workspace_switcher.workspace_switcher.start',
       },
     },
     sections = {

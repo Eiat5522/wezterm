@@ -23,19 +23,14 @@ function M.register_events()
 	wezterm.on("update-status", function(window, pane)
 		local meta = pane:get_metadata() or {}
 		local overrides = window:get_config_overrides() or {}
-		-- Display mux latency in the right status area
-		if meta.is_tardy then
-			local secs = meta.since_last_response_ms / 1000.0
-			window:set_right_status(string.format("tardy: %5.1fs⏳", secs))
+
+		-- Change color scheme if input is a password field
+		if meta.password_input then
+			overrides.color_scheme = "Red Alert"
 		else
-			-- Change color scheme if input is a password field
-			if meta.password_input then
-				overrides.color_scheme = "Red Alert"
-			else
-				overrides.color_scheme = nil
-			end
-			window:set_config_overrides(overrides)
+			overrides.color_scheme = nil
 		end
+		window:set_config_overrides(overrides)
 	end)
 end
 

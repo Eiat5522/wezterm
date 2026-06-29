@@ -14,6 +14,9 @@ function M.apply_to_config(config, plugins)
 	if plugins.agent_deck then
 		plugins.agent_deck.apply_to_config(config, {
 			update_interval = 1000,
+			right_status = {
+				register_update_status = false,
+			},
 			notifications = {
 				enabled = true,
 				on_waiting = true,

@@ -9,7 +9,6 @@ return {
       hide = {
         'resurrect.fuzzy_loader.fuzzy_load.finished',
         'quick_domain.fuzzy_selector.opened',
-        'smart_workspace_switcher.workspace_switcher.start',
       },
     },
     sections = {

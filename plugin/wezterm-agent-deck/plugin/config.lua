@@ -133,6 +133,7 @@ local default_config = {
     -- Right status (aggregate view)
     right_status = {
         enabled = true,
+        register_update_status = true,
         components = {
             { type = 'badge', filter = 'waiting', label = 'waiting' },
             { type = 'separator', text = ' | ' },

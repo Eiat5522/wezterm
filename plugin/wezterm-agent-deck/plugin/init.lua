@@ -1095,6 +1095,16 @@ local function count_agents_by_status()
     return counts
 end
 
+local function update_window_agents(window, plugin_config)
+    cleanup_stale_entries(window)
+
+    for _, mux_tab in ipairs(window:mux_window():tabs()) do
+        for _, p in ipairs(mux_tab:panes()) do
+            update_agent_state(p, plugin_config)
+        end
+    end
+end
+
 --[[ ============================================
      Public API
      ============================================ ]]
@@ -1141,32 +1151,17 @@ function M.apply_to_config(config, opts)
     end
     
     -- Status bar (right status)
-    if plugin_config.right_status.enabled then
+    if plugin_config.right_status.register_update_status ~= false and plugin_config.right_status.enabled then
         wezterm.on('update-status', function(window, pane)
-            cleanup_stale_entries(window)
-            
-            for _, mux_tab in ipairs(window:mux_window():tabs()) do
-                for _, p in ipairs(mux_tab:panes()) do
-                    update_agent_state(p, plugin_config)
-                end
-            end
-            
-            local counts = count_agents_by_status()
-            local right_status = render_right_status(counts)
+            local right_status = M.update_right_status(window, pane)
             
             if right_status and #right_status > 0 then
                 window:set_right_status(wezterm.format(right_status))
             end
         end)
-    else
+    elseif plugin_config.right_status.register_update_status ~= false then
         wezterm.on('update-status', function(window, pane)
-            cleanup_stale_entries(window)
-            
-            for _, mux_tab in ipairs(window:mux_window():tabs()) do
-                for _, p in ipairs(mux_tab:panes()) do
-                    update_agent_state(p, plugin_config)
-                end
-            end
+            update_window_agents(window, plugin_config)
         end)
     end
     
@@ -1182,6 +1177,16 @@ M.get_config = get_config
 M.set_config = set_config
 M.get_status_color = get_status_color
 M.get_status_icon = get_status_icon
+M.update_right_status = function(window, pane)
+    local plugin_config = get_config()
+    update_window_agents(window, plugin_config)
+
+    if not plugin_config.right_status.enabled then
+        return {}
+    end
+
+    return render_right_status(count_agents_by_status())
+end
 M.update_pane = function(pane)
     return update_agent_state(pane, get_config())
 end

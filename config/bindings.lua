@@ -3,29 +3,31 @@ local mux = wezterm.mux
 local act = wezterm.action
 local M = {}
 
-local function open_cht_sh(window, pane, line)
-	if not line then
-		return
-	end
+local wsl_script_dir = "/mnt/c/Users/Dev/.config/wezterm/scripts"
+local cht_sh_launcher = 'source "' .. wsl_script_dir .. '/cht-sh.sh" "$@"'
+local snip_launcher = 'source "' .. wsl_script_dir .. '/snip.sh"'
 
-	local query = line:match("^%s*(.-)%s*$")
-	local command = "cht.sh --shell=bash --mode=auto"
+local function trimmed(value)
+	return (value or ""):gsub("[\r\n]+", " "):match("^%s*(.-)%s*$")
+end
+
+local function open_cht_sh(window, pane, seed_query)
+	local query = trimmed(seed_query)
 	local cwd_url = pane:get_current_working_dir()
-	local cwd = cwd_url and cwd_url.file_path or nil
-	if query ~= "" then
-		command = command .. " " .. string.format("%q", query)
-	end
-
 	window:perform_action(
 		act.SpawnCommandInNewWindow({
 			label = query ~= "" and ("cht.sh: " .. query) or "cht.sh",
-			args = { "bash", "-lc", command .. "; exec bash -li" },
-			cwd = cwd,
+			args = { "bash", "-lic", cht_sh_launcher, "wezterm-cht-sh", query },
+			cwd = cwd_url and cwd_url.file_path or nil,
 			domain = "CurrentPaneDomain",
 			position = { x = 100, y = 50 },
 		}),
 		pane
 	)
+end
+
+local function open_cht_sh_from_selection(window, pane)
+	open_cht_sh(window, pane, window:get_selection_text_for_pane(pane))
 end
 
 function M.apply_to_config(config, plugins)
@@ -144,9 +146,9 @@ function M.apply_to_config(config, plugins)
 			mods = "LEADER|SHIFT",
 			action = act.SpawnCommandInNewWindow({
 				label = "Open Wezterm Config",
-				args = { "bash", "-li", '$EDITOR "/mnt/c/Users/Dev/.wezterm.lua"' },
+				args = { "bash", "-lc", '$EDITOR "/mnt/c/Users/Dev/.config/wezterm/wezterm.lua"' },
 				domain = "CurrentPaneDomain",
-				position = { x = 0, y = 0 },
+				position = { x = 300, y = 500 },
 			}),
 		},
 		{
@@ -181,6 +183,11 @@ function M.apply_to_config(config, plugins)
 			end),
 		},
 		{
+			key = "N",
+			mods = "LEADER",
+			action = act.SendString("nvm use default\n"),
+		},
+		{
 			key = "E",
 			mods = "CTRL|SHIFT",
 			action = act.PromptInputLine({
@@ -194,72 +201,36 @@ function M.apply_to_config(config, plugins)
 			}),
 		},
 		{
-			key = "H",
+			key = "h",
 			mods = "CTRL|SHIFT",
-			action = act.PromptInputLine({
-				description = "Enter package or library for cht.sh",
-				action = wezterm.action_callback(function(window, pane, line)
-					if line then
-						open_cht_sh(window, pane, line)
-					end
-				end),
+			action = wezterm.action_callback(open_cht_sh_from_selection),
+		},
+		{
+			key = "n",
+			mods = "CTRL|SHIFT",
+			action = act.SendString("nvm use default\n"),
+		},
+		{
+			key = "n",
+			mods = "CTRL|ALT",
+			action = act.SendString("nvm use default\n"),
+		},
+		{
+			key = "n",
+			mods = "LEADER",
+			action = act.SendString("nvm use default\n"),
+		},
+		{
+			key = "s",
+			mods = "LEADER",
+			action = act.SpawnCommandInNewWindow({
+				label = "Open snip",
+				domain = "CurrentPaneDomain",
+				args = { "bash", "-lic", snip_launcher },
+				position = { x = 300, y = 500 },
 			}),
 		},
 	}
-
-	-- Smart Workspace Switcher configuration
-	if plugins.smart_workspace_switcher then
-		local sws = plugins.smart_workspace_switcher
-		sws.choices.get_zoxide_elements = function(choice_table, opts)
-			if opts == nil then
-				opts = { extra_args = "", workspace_ids = {} }
-			end
-
-			local cmd = "zoxide query -l " .. (opts.extra_args or "")
-			local success, stdout, stderr = wezterm.run_child_process({ "wsl.exe", "bash", "-l", "-c", cmd })
-
-			-- Temporary debug logger
-			local f = io.open("C:\\Users\\Dev\\wezterm_debug.log", "w")
-			if f then
-				f:write("Command: " .. tostring(cmd) .. "\n")
-				f:write("Success: " .. tostring(success) .. "\n")
-				f:write("Stdout length: " .. tostring(stdout and #stdout or "nil") .. "\n")
-				f:write("Stdout: " .. tostring(stdout) .. "\n")
-				f:write("Stderr: " .. tostring(stderr) .. "\n")
-				f:close()
-			end
-
-			if not success then
-				wezterm.log_error("WSL zoxide query failed: " .. tostring(stderr))
-				return choice_table
-			end
-
-			for _, path in ipairs(wezterm.split_by_newlines(stdout)) do
-				local updated_path = string.gsub(path, "^/home/eiat", "~")
-				if not opts.workspace_ids[updated_path] then
-					table.insert(choice_table, {
-						id = path,
-						label = updated_path,
-					})
-				end
-			end
-			return choice_table
-		end
-
-		table.insert(config.keys, {
-			key = "s",
-			mods = "LEADER",
-			action = sws.switch_workspace({
-				extra_args = " | rg -Fxf '\\\\wsl.localhost\\Ubuntu-24.04\\home\\eiat\\projects'",
-			}),
-		})
-		table.insert(config.keys, {
-			key = "S",
-			mods = "LEADER",
-			action = sws.switch_to_prev_workspace(),
-		})
-		sws.zoxide_path = "\\\\wsl.localhost\\Ubuntu-24.04\\home\\eiat\\bin\\zoxide"
-	end
 
 	-- Toggle Terminal configuration
 	if plugins.toggle_terminal then

@@ -1,10 +1,11 @@
 local wezterm = require("wezterm")
 
 -- Ensure the config directory is in the package path for resolving modules in the config folder
-package.path = package.path .. ";" .. wezterm.config_dir .. "/?.lua"
-package.path = package.path .. ";" .. wezterm.config_dir .. "/?/init.lua"
+local config_dir = wezterm.home_dir .. "/.config/wezterm"
+package.path = package.path .. ";" .. config_dir .. "/?.lua"
+package.path = package.path .. ";" .. config_dir .. "/?/init.lua"
 
-local plugin_root = wezterm.home_dir .. "/.config/wezterm/plugin"
+local plugin_root = config_dir .. "/plugin"
 
 local function load_local_plugin(name)
 	local plugin_lua_path = plugin_root .. "/" .. name .. "/plugin/?.lua"
@@ -25,7 +26,6 @@ local plugins = {
 	tabline = load_local_plugin("wezterm-tabline"),
 	toggle_terminal = load_local_plugin("wezterm-toggle-terminal"),
 	wezterm_sync = load_local_plugin("wezterm-sync"),
-	smart_workspace_switcher = load_local_plugin("wezterm-smart-workspace-switcher"),
 }
 
 local config = {}
